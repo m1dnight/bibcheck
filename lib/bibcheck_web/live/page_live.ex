@@ -1,39 +1,105 @@
 defmodule BibcheckWeb.PageLive do
   use BibcheckWeb, :live_view
+  require Logger
 
+  @testdata """
+  @book{DBLP:books/daglib/0035693,
+  author    = {Chris MacCord},
+  title     = {Metaprogramming Elixir - Write Less Code, Get More Done (and Have
+               Fun!)},
+  series    = {The pragmatic programmers},
+  publisher = {O'Reilly},
+  year      = {2015},
+  url       = {http://www.oreilly.de/catalog/9781680500417/index.html},
+  isbn      = {978-1-680-50041-7},
+  timestamp = {Thu, 11 Jun 2015 16:44:23 +0200},
+  biburl    = {https://dblp.org/rec/books/daglib/0035693.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+  """
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, query: "", results: %{})}
+    # socket =
+    #   socket
+    #   |> assign(:document_issues, [])
+
+    bibtex_document = @testdata
+    errors = BibtexParser.check_string(bibtex_document)
+
+    document_issues = errors |> Enum.filter(fn {e, _} -> is_atom(e) end)
+    socket = assign(socket, :document_issues, document_issues)
+
+    entry_issues = errors |> Enum.filter(fn {e, _} -> is_bitstring(e) end)
+    socket = assign(socket, :entry_issues, entry_issues)
+
+    socket = assign(socket, :bibtex_document, bibtex_document)
+    Logger.error(inspect(entry_issues))
+
+    {:ok, socket}
   end
 
   @impl true
-  def handle_event("suggest", %{"q" => query}, socket) do
-    {:noreply, assign(socket, results: search(query), query: query)}
+  def handle_event("check", %{"bibtex_text" => %{"bibtex_input" => content}}, socket) do
+    socket = assign(socket, :bibtex_document, content)
+    errors = BibtexParser.check_string(content)
+
+    document_issues = errors |> Enum.filter(fn {e, _} -> is_atom(e) end)
+    socket = assign(socket, :document_issues, document_issues)
+
+    entry_issues = errors |> Enum.filter(fn {e, _} -> is_bitstring(e) end)
+    socket = assign(socket, :entry_issues, entry_issues)
+
+    {:noreply, socket}
   end
 
   @impl true
-  def handle_event("search", %{"q" => query}, socket) do
-    case search(query) do
-      %{^query => vsn} ->
-        {:noreply, redirect(socket, external: "https://hexdocs.pm/#{query}/#{vsn}")}
+  def handle_event("format", _, socket) do
+    content = socket.assigns.bibtex_document
+    formatted = content |> BibtexParser.parse_string() |>  BibtexParser.Writer.to_string()
+    socket = assign(socket, :bibtex_document, formatted)
+    {:noreply, socket}
+  end
+
+  def pretty_error_name(error_name) do
+    case error_name do
+      :duplicate_titles ->
+        "Duplicate titles"
+
+      :duplicate_labels ->
+        "Duplicate labels"
+
+      :empty_tags ->
+        "Empty tags"
 
       _ ->
-        {:noreply,
-         socket
-         |> put_flash(:error, "No dependencies found matching \"#{query}\"")
-         |> assign(results: %{}, query: query)}
+        "Unknown error"
     end
   end
 
-  defp search(query) do
-    if not BibcheckWeb.Endpoint.config(:code_reloader) do
-      raise "action disabled when not in development"
-    end
+  def summarize_entry({entry, issues}) do
+    entry = entry
 
-    for {app, desc, vsn} <- Application.started_applications(),
-        app = to_string(app),
-        String.starts_with?(app, query) and not List.starts_with?(desc, ~c"ERTS"),
-        into: %{},
-        do: {app, vsn}
+    issues =
+      issues
+      |> Enum.map(&pretty_print_entry_issue/1)
+
+    {entry, issues}
+  end
+
+  def pretty_print_entry_issue(issue) do
+    case issue do
+      {:empty_tags, tags} ->
+        tag_strs = tags |> Enum.map(&Atom.to_string/1) |> Enum.join(", ")
+        "Empty tags: #{tag_strs}"
+
+      {:abbreviated_journal_title, title} ->
+        "Abbreviated journal title: #{title}"
+
+      {:missing_tags, tags} ->
+        tag_strs = tags |> Enum.join(", ")
+        "Missing required tags: #{tag_strs}"
+      _ ->
+        inspect(issue)
+    end
   end
 end

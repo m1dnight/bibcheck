@@ -1,48 +1,44 @@
-<section class="phx-hero">
-  <h1><%= gettext "Welcome to %{name}!", name: "Phoenix" %></h1>
-  <p>Peace of mind from prototype to production</p>
-
-  <form phx-change="suggest" phx-submit="search">
-    <input type="text" name="q" value="<%= @query %>" placeholder="Live dependency search" list="results" autocomplete="off"/>
-    <datalist id="results">
-      <%= for {app, _vsn} <- @results do %>
-        <option value="<%= app %>"><%= app %></option>
-      <% end %>
-    </datalist>
-    <button type="submit" phx-disable-with="Searching...">Go to Hexdocs</button>
-  </form>
-</section>
-
 <section class="row">
-  <article class="column">
-    <h2>Resources</h2>
-    <ul>
-      <li>
-        <a href="https://hexdocs.pm/phoenix/overview.html">Guides &amp; Docs</a>
-      </li>
-      <li>
-        <a href="https://github.com/phoenixframework/phoenix">Source</a>
-      </li>
-      <li>
-        <a href="https://github.com/phoenixframework/phoenix/blob/v1.5/CHANGELOG.md">v1.5 Changelog</a>
-      </li>
-    </ul>
+
+  <article class="column column-60">
+    <form phx-change="check">
+      <%= textarea :bibtex_text, :bibtex_input, autofocus: true, "phx-debounce": "300", id: "bibtex_input", autocomplete: "off" , value: @bibtex_document %>
+    </form>
   </article>
-  <article class="column">
-    <h2>Help</h2>
-    <ul>
-      <li>
-        <a href="https://elixirforum.com/c/phoenix-forum">Forum</a>
-      </li>
-      <li>
-        <a href="https://webchat.freenode.net/?channels=elixir-lang">#elixir-lang on Freenode IRC</a>
-      </li>
-      <li>
-        <a href="https://twitter.com/elixirphoenix">Twitter @elixirphoenix</a>
-      </li>
-      <li>
-        <a href="https://elixir-slackin.herokuapp.com/">Elixir on Slack</a>
-      </li>
-    </ul>
+
+  <article class="column column-40">
+    <%= if @document_issues != [] do  %>
+      <ul>
+        <%= for issue <- @document_issues do %>
+        <li class="document-issues">
+          <%= pretty_error_name(elem(issue, 0)) %>
+          <ul>
+          <%= for value <- elem(issue, 1) do %>
+            <li><%= value %></li>
+          <% end %>
+          </ul>
+        </li>
+      <% end %>
+      </ul>
+    <% end %>
+
+    <%= if @entry_issues != [] do  %>
+      <ul>
+        <%= for {entry, issues} <- Enum.map(@entry_issues, &summarize_entry/1) do %>
+        <li class="entry-issues">
+          Entry <span class="entrylabel"><%= entry %></span>
+          <ul>
+            <%= for issue <- issues do %>
+            <li>
+              <%= issue %>
+            </li>
+            <% end %>
+          </ul>
+        </li>
+        <% end %>
+      </ul>
+    <% end %>
+    <button phx-click="format">Format</button>
   </article>
+
 </section>

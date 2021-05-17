@@ -1,0 +1,19 @@
+version: "3"
+
+networks:
+  internal:
+    external: false
+
+services:
+  bibcheck:
+    restart: always
+    image: m1dnight/bibcheck:latest
+    environment:
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - LIVE_VIEW_SALT=${LIVE_VIEW_SALT}
+      - PORT=${PORT}
+      - TZ=${TZ}
+    ports:
+      - ${PORT}:${PORT}
+    networks:
+      - internal
