@@ -20,7 +20,7 @@ live_view_salt =
     You can generate one by calling: mix phx.gen.secret
     """
 
-config :Bibcheck, BibcheckWeb.Endpoint,
+config :bibcheck, BibcheckWeb.Endpoint,
   secret_key_base: secret_key_base,
   url: [host: System.get_env("APP_HOST")],
   http: [
@@ -40,7 +40,7 @@ timezone =
     Environment variable timezone is missing.
     """
 
-config :Bibcheck, timezone: timezone
+config :bibcheck, timezone: timezone
 
 debuglevel =
   System.get_env("DEBUG") ||

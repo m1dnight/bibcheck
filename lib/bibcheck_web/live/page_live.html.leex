@@ -26,7 +26,11 @@
       <ul>
         <%= for {entry, issues} <- Enum.map(@entry_issues, &summarize_entry/1) do %>
         <li class="entry-issues">
+
           Entry <span class="entrylabel"><%= entry %></span>
+          <%= if title(@entries, entry) do  %>
+          <a style="float: right;" href="<%= "http://dblp.org/search/index.php#query=#{title(@entries, entry)}" %>">DBLP</a>
+          <%end  %>
           <ul>
             <%= for issue <- issues do %>
             <li>

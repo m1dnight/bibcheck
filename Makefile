@@ -6,7 +6,7 @@ DOCKER_IMG := m1dnight/bibcheck
 .PHONY: build
 
 build:
-	docker build --no-cache -t $(DOCKER_IMG):$(DOCKER_TAG) .
+	docker build -t $(DOCKER_IMG):$(DOCKER_TAG) .
 
 dev: 
 	docker build -t $(DOCKER_IMG):$(DOCKER_TAG_DEV) .

@@ -1,9 +1,5 @@
 version: "3"
 
-networks:
-  internal:
-    external: false
-
 services:
   bibcheck:
     restart: always
@@ -15,5 +11,3 @@ services:
       - TZ=${TZ}
     ports:
       - ${PORT}:${PORT}
-    networks:
-      - internal
